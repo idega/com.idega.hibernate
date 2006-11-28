@@ -13,7 +13,7 @@ public class IWBundleStarter implements IWBundleStartable {
 
 	private void tryHibernate() {
 		try{
-			Test test = new Test();
+			new Test();
 		}
 		catch(Throwable t){
 			t.printStackTrace();

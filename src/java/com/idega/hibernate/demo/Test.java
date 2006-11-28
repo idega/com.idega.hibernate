@@ -1,5 +1,5 @@
 /**
- * $Id: Test.java,v 1.1 2006/09/19 23:58:12 tryggvil Exp $
+ * $Id: Test.java,v 1.2 2006/11/28 18:44:10 laddi Exp $
  * Created in 2006 by tryggvil
  *
  * Copyright (C) 2000-2006 Idega Software hf. All Rights Reserved.
@@ -12,18 +12,18 @@ package com.idega.hibernate.demo;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+
 import com.idega.core.persistence.EntityManagerService;
-import com.idega.hibernate.EntityManagerUtil;
 
 
 /**
  * <p>
  * Class for testing if Hibernate works in eplatform
  * </p>
- *  Last modified: $Date: 2006/09/19 23:58:12 $ by $Author: tryggvil $
+ *  Last modified: $Date: 2006/11/28 18:44:10 $ by $Author: laddi $
  * 
  * @author <a href="mailto:tryggvil@idega.com">tryggvil</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class Test {
 	

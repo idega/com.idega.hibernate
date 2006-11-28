@@ -27,7 +27,9 @@ public class Driver implements Serializable
     public Long getId() {
         return driver_id;
     }
-    private void setId(Long driver_id) {	  //Note private visibility
+    
+    @SuppressWarnings("unused")
+		private void setId(Long driver_id) {	  //Note private visibility
         this.driver_id = driver_id;
     }
     public String getName() {

@@ -1,5 +1,5 @@
 /**
- * $Id: HibernateUtil.java,v 1.1 2006/09/19 23:58:12 tryggvil Exp $
+ * $Id: HibernateUtil.java,v 1.2 2006/11/28 18:44:10 laddi Exp $
  * Created in 2006 by tryggvil
  *
  * Copyright (C) 2000-2006 Idega Software hf. All Rights Reserved.
@@ -13,11 +13,10 @@ package com.idega.hibernate;
 import java.sql.Connection;
 import java.util.Properties;
 import java.util.logging.Logger;
-import net.sf.ehcache.hibernate.EhCacheProvider;
+
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.SettingsFactory;
-import org.hibernate.ejb.InjectionSettingsFactory;
+
 import com.idega.data.DatastoreInterface;
 import com.idega.util.database.ConnectionBroker;
 import com.idega.util.database.PoolManager;
@@ -26,10 +25,10 @@ import com.idega.util.database.PoolManager;
  * <p>
  * Class to initialize hibernate in eplatform
  * </p>
- *  Last modified: $Date: 2006/09/19 23:58:12 $ by $Author: tryggvil $
+ *  Last modified: $Date: 2006/11/28 18:44:10 $ by $Author: laddi $
  * 
  * @author <a href="mailto:tryggvil@idega.com">tryggvil</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class HibernateUtil { 
 

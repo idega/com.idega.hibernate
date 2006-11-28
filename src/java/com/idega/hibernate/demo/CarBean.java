@@ -21,7 +21,9 @@ public class CarBean implements Serializable, Car
     public Long getId() {
         return car_id;
     }
-    private void setId(Long car_id) {	   //Note private visibility
+    
+    @SuppressWarnings("unused")
+		private void setId(Long car_id) {	   //Note private visibility
         this.car_id = car_id;
     }
 
