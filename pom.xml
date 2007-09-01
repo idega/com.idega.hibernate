@@ -11,7 +11,7 @@
   <groupId>com.idega.block.platform</groupId>
   <name>Hibernate Integration</name>
   <artifactId>com.idega.hibernate</artifactId>
-  <version>3.2.0.ga</version>
+  <version>${com.idega.block.platform-com.idega.hibernate-version}</version>
   <inceptionYear>2006</inceptionYear>
   <description>Integration of the Hibernate Peristence Framework into idegaWeb ePlatorm</description>
   <scm>
@@ -38,7 +38,7 @@
 	<dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate</artifactId>
-      <version>3.2.0.ga</version>
+      <version>${org.hibernate-hibernate-version}</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
@@ -51,7 +51,7 @@
 	<dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-annotations</artifactId>
-      <version>3.2.0.ga</version>
+      <version>${org.hibernate-hibernate-annotations-version}</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
@@ -64,7 +64,7 @@
 	<dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-entitymanager</artifactId>
-      <version>3.2.0.ga</version>
+      <version>${org.hibernate-hibernate-entitymanager-version}</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
