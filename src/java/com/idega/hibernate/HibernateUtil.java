@@ -1,5 +1,5 @@
 /**
- * $Id: HibernateUtil.java,v 1.2 2006/11/28 18:44:10 laddi Exp $
+ * $Id: HibernateUtil.java,v 1.3 2007/09/17 13:32:08 civilis Exp $
  * Created in 2006 by tryggvil
  *
  * Copyright (C) 2000-2006 Idega Software hf. All Rights Reserved.
@@ -11,10 +11,14 @@ package com.idega.hibernate;
 
 
 import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.hibernate.SessionFactory;
+import org.hibernate.cfg.AnnotationConfiguration;
 import org.hibernate.cfg.Configuration;
 
 import com.idega.data.DatastoreInterface;
@@ -25,16 +29,14 @@ import com.idega.util.database.PoolManager;
  * <p>
  * Class to initialize hibernate in eplatform
  * </p>
- *  Last modified: $Date: 2006/11/28 18:44:10 $ by $Author: laddi $
+ *  Last modified: $Date: 2007/09/17 13:32:08 $ by $Author: civilis $
  * 
  * @author <a href="mailto:tryggvil@idega.com">tryggvil</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class HibernateUtil { 
 
-    private static SessionFactory sessionFactory=null;
-
-    public static void configure(){
+    public static SessionFactory configure() {
         try {
 	     Logger loggerRoot = Logger.getLogger(HibernateUtil.class.getName());
 	     Logger loggerConnect = Logger.getLogger("Connect");
@@ -48,9 +50,10 @@ public class HibernateUtil {
 	     	Properties properties = getProperties();
 			//settingsfactory.buildSettings(properties);
 			Configuration configuration = new Configuration();
+			
 			configuration.setProperties(properties);
 			//Configuration conf2 = configuration.configure();
-            sessionFactory = configuration.buildSessionFactory();
+            return configuration.buildSessionFactory();
         } catch (Throwable ex) {
             // Make sure you log the exception, as it might be swallowed
             System.err.println("Initial SessionFactory creation failed." + ex);
@@ -79,12 +82,18 @@ public class HibernateUtil {
     	
     	return prop;
 	}
+    
+    private static void detectDialect(Properties prop) {
+    	
+    	detectDialect(prop, null);
+    }
 
-	private static void detectDialect(Properties prop) {
+	private static void detectDialect(Properties prop, String dataSourceName) {
 		
 		Connection conn = null;
 		try{	
-			conn = ConnectionBroker.getConnection();
+			conn = dataSourceName == null ? ConnectionBroker.getConnection() : ConnectionBroker.getConnection(dataSourceName);
+			
 			String dsType = DatastoreInterface.getDataStoreType(conn);
 			String dialectClass = null;
 			if(dsType.equals(DatastoreInterface.DBTYPE_DB2)){
@@ -114,9 +123,9 @@ public class HibernateUtil {
 			else if(dsType.equals(DatastoreInterface.DBTYPE_MYSQL)){
 				dialectClass = org.hibernate.dialect.MySQLDialect.class.getName();
 			}
-			else if(dsType.equals(DatastoreInterface.DBTYPE_ORACLE)){
-				dialectClass = org.hibernate.dialect.OracleDialect.class.getName();
-			}
+//			else if(dsType.equals(DatastoreInterface.DBTYPE_ORACLE)){ 						-- dublicated
+//				dialectClass = org.hibernate.dialect.OracleDialect.class.getName();
+//			}
 			else if(dsType.equals(DatastoreInterface.DBTYPE_ORACLE)){
 				dialectClass = org.hibernate.dialect.OracleDialect.class.getName();
 			}
@@ -133,9 +142,51 @@ public class HibernateUtil {
 	}
 
 	public static SessionFactory getSessionFactory() {
-		if(sessionFactory==null){
-			configure();
-		}
-    	return sessionFactory;
+		
+		return getSessionFactory(null);
+    }
+	
+	public static synchronized SessionFactory getSessionFactory(String cfgPath) {
+		
+		String confPath = cfgPath == null || cfgPath.equals("") ? "default" : cfgPath;
+
+		Map<String, SessionFactory> initializedSessionFactories = getInitializedSessionFactories();
+		
+		if(initializedSessionFactories.containsKey(confPath))
+			return initializedSessionFactories.get(confPath);
+		
+		SessionFactory sf = cfgPath == null || cfgPath.equals("") ? configure() : configure(cfgPath);
+		
+		initializedSessionFactories.put(confPath, sf);
+		return sf;
+    }
+	
+	private static Map<String, SessionFactory> initializedSessionFactories;
+	
+	private static Map<String, SessionFactory> getInitializedSessionFactories() {
+		
+		if(initializedSessionFactories == null)
+			initializedSessionFactories = new HashMap<String, SessionFactory>();
+		
+		return initializedSessionFactories;
+	}
+	
+	private static SessionFactory configure(String cfgPath){
+        try {
+            
+			Configuration configuration = new AnnotationConfiguration();
+
+			if(cfgPath == null)
+				configuration.configure();
+			else
+				configuration.configure(cfgPath);
+			
+            return configuration.buildSessionFactory();
+            
+        } catch (Throwable ex) {
+        	
+        	Logger.getLogger(HibernateUtil.class.getName()).log(Level.SEVERE, "Initial SessionFactory creation failed for cfg path: "+cfgPath, ex);
+            throw new ExceptionInInitializerError(ex);
+        }
     }
 }
