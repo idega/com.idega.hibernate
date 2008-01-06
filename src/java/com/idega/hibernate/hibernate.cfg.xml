@@ -29,12 +29,5 @@
     <!-- Enable Hibernate's automatic session context management -->
     <property name="hibernate.current_session_context_class">thread</property>
     
-    <!-- ###################### -->
-    <!-- # jbpm mapping files # -->
-    <!-- ###################### -->
-
-    <!-- hql queries and type defs -->
-    <mapping resource="org/jbpm/db/hibernate.queries.hbm.xml" />
-    
   </session-factory>
 </hibernate-configuration>
