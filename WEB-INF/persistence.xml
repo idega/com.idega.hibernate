@@ -13,12 +13,13 @@
         <mapping-file>classpath*:is/idega/**/orm*.xml</mapping-file>
         <mapping-file>classpath*:org/jbpm/**/*.hbm.xml</mapping-file>
         
-        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <exclude-unlisted-classes/>
         <properties>
             <!-- 
             doesn't work 
             <property name="hibernate.archive.autodetection" value="hbm"/>
             -->
+            
             <property name="hibernate.ejb.cfgfile" value="/com/idega/hibernate/hibernate.cfg.xml" />
         </properties>
              
