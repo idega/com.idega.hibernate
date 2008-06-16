@@ -7,8 +7,8 @@ import com.idega.idegaweb.IWBundleStartable;
 public class IWBundleStarter implements IWBundleStartable {
 
 	public void start(IWBundle arg0) {
-		// TODO Auto-generated method stub
-		tryHibernate();
+		//hibernate is started from spring from the core bundle
+		//tryHibernate();
 	}
 
 	private void tryHibernate() {
