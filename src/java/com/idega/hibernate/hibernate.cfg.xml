@@ -31,5 +31,7 @@
     <!-- Enable Hibernate's automatic session context management -->
     <property name="hibernate.current_session_context_class">thread</property>
     
+    <property name="hibernate.bytecode.use_reflection_optimizer">true</property>
+    
   </session-factory>
 </hibernate-configuration>
