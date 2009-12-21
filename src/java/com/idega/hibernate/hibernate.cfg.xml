@@ -26,7 +26,7 @@
     </DataSource properties> 
     -->
     
-    <property name="hibernate.show_sql">false</property>
+    <property name="hibernate.show_sql">true</property>
     
     <!-- Enable Hibernate's automatic session context management -->
     <property name="hibernate.current_session_context_class">thread</property>
