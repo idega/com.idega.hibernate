@@ -1,6 +1,7 @@
 package com.idega.hibernate.demo;
 
 import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -9,26 +10,30 @@ import javax.persistence.Table;
 @Table(name="CAR")
 public class CarBean implements Serializable, Car
 {
+	private static final long serialVersionUID = -464315998566500332L;
+
 	@Id
     private Long car_id;
     private String manufacturer;
     private String model;
     private int year;
 
-    public CarBean() {}
+    public CarBean() {
+    	//Empty constructor
+    }
 
 
     public Long getId() {
-        return car_id;
+        return this.car_id;
     }
     
-    @SuppressWarnings("unused")
-		private void setId(Long car_id) {	   //Note private visibility
+	@SuppressWarnings("unused")
+	private void setId(Long car_id) {	   //Note private visibility
         this.car_id = car_id;
     }
 
     public String getManufacturer() {
-        return manufacturer;
+        return this.manufacturer;
     }
 
     public void setManufacturer(String manufacturer) {
@@ -36,7 +41,7 @@ public class CarBean implements Serializable, Car
     }
 
     public String getModel() {
-        return model;
+        return this.model;
     }
 
     public void setModel(String model) {
@@ -44,7 +49,7 @@ public class CarBean implements Serializable, Car
     }
 
     public int getYear() {
-        return year;
+        return this.year;
     }
 
     public void setYear(int year) {

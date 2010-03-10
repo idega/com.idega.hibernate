@@ -12,8 +12,11 @@ package com.idega.hibernate;
 import java.sql.Connection;
 import java.util.Properties;
 import java.util.logging.Logger;
+
 import javax.persistence.EntityManagerFactory;
+
 import org.hibernate.ejb.Ejb3Configuration;
+
 import com.idega.core.persistence.EntityManagerProvider;
 import com.idega.data.DatastoreInterface;
 import com.idega.hibernate.demo.CarBean;
@@ -83,6 +86,7 @@ public class EntityManagerUtil implements EntityManagerProvider{
     	return prop;
 	}
 
+	@SuppressWarnings("deprecation")
 	private static void detectDialect(Properties prop) {
 		
 		Connection conn = null;

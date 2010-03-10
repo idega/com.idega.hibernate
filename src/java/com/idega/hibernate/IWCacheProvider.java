@@ -2,14 +2,17 @@ package com.idega.hibernate;
 
 import java.net.URL;
 import java.util.Properties;
+
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.hibernate.EhCacheProvider;
 import net.sf.ehcache.util.ClassLoaderUtil;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.cache.Cache;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.CacheProvider;
+
 import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
 
@@ -22,6 +25,7 @@ import com.idega.idegaweb.IWMainApplication;
  * @author <a href="mailto:tryggvil@idega.com">tryggvil</a>
  * @version $Revision: 1.1 $
  */
+@SuppressWarnings("deprecation")
 public class IWCacheProvider implements CacheProvider {
 
 	public static final String NET_SF_EHCACHE_CONFIGURATION_RESOURCE_NAME = "net.sf.ehcache.configurationResourceName";
@@ -30,12 +34,12 @@ public class IWCacheProvider implements CacheProvider {
 
 	public Cache buildCache(String name, Properties properties) throws CacheException {
 		try {
-			net.sf.ehcache.Cache cache = manager.getCache(name);
+			net.sf.ehcache.Cache cache = this.manager.getCache(name);
 			if (cache == null) {
 				LOG.warn("Could not find a specific ehcache configuration for cache named [" + name
 						+ "]; using defaults.");
-				manager.addCache(name);
-				cache = manager.getCache(name);
+				this.manager.addCache(name);
+				cache = this.manager.getCache(name);
 				LOG.debug("started EHCache region: " + name);
 			}
 			return new net.sf.ehcache.hibernate.EhCache(cache);
@@ -56,7 +60,7 @@ public class IWCacheProvider implements CacheProvider {
 	}
 
 	public void start(Properties properties) throws CacheException {
-		if (manager != null) {
+		if (this.manager != null) {
 			LOG.warn("Attempt to restart an already started EhCacheProvider. Use sessionFactory.close() "
 					+ " between repeated calls to buildSessionFactory. Using previously created EhCacheProvider."
 					+ " If this behaviour is required, consider using SingletonEhCacheProvider.");
@@ -68,7 +72,7 @@ public class IWCacheProvider implements CacheProvider {
 				configurationResourceName = (String) properties.get(NET_SF_EHCACHE_CONFIGURATION_RESOURCE_NAME);
 			}
 			if (configurationResourceName == null || configurationResourceName.length() == 0) {
-				manager = IWCacheManager2.getInstance(IWMainApplication.getDefaultIWMainApplication()).getInternalCacheManager();
+				this.manager = IWCacheManager2.getInstance(IWMainApplication.getDefaultIWMainApplication()).getInternalCacheManager();
 			}
 			else {
 				if (!configurationResourceName.startsWith("/")) {
@@ -79,7 +83,7 @@ public class IWCacheProvider implements CacheProvider {
 					}
 				}
 				URL url = loadResource(configurationResourceName);
-				manager = new CacheManager(url);
+				this.manager = new CacheManager(url);
 			}
 		}
 		catch (net.sf.ehcache.CacheException e) {
@@ -91,9 +95,7 @@ public class IWCacheProvider implements CacheProvider {
 								+ " between repeated calls to buildSessionFactory. Consider using SingletonEhCacheProvider. Error from "
 								+ " ehcache was: " + e.getMessage());
 			}
-			else {
-				throw e;
-			}
+			throw e;
 		}
 	}
 
@@ -114,9 +116,9 @@ public class IWCacheProvider implements CacheProvider {
 	}
 
 	public void stop() {
-		if (manager != null) {
-			manager.shutdown();
-			manager = null;
+		if (this.manager != null) {
+			this.manager.shutdown();
+			this.manager = null;
 		}
 	}
 }

@@ -88,6 +88,7 @@ public class HibernateUtil {
     	detectDialect(prop, null);
     }
 
+	@SuppressWarnings("deprecation")
 	private static void detectDialect(Properties prop, String dataSourceName) {
 		
 		Connection conn = null;
@@ -150,14 +151,14 @@ public class HibernateUtil {
 		
 		String confPath = cfgPath == null || cfgPath.equals("") ? "default" : cfgPath;
 
-		Map<String, SessionFactory> initializedSessionFactories = getInitializedSessionFactories();
+		Map<String, SessionFactory> sessionFactories = getInitializedSessionFactories();
 		
-		if(initializedSessionFactories.containsKey(confPath))
-			return initializedSessionFactories.get(confPath);
+		if(sessionFactories.containsKey(confPath))
+			return sessionFactories.get(confPath);
 		
 		SessionFactory sf = cfgPath == null || cfgPath.equals("") ? configure() : configure(cfgPath);
 		
-		initializedSessionFactories.put(confPath, sf);
+		sessionFactories.put(confPath, sf);
 		return sf;
     }
 	
