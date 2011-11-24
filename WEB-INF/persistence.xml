@@ -14,6 +14,7 @@
         <mapping-file>classpath*:is/illuminati/**/orm*.xml</mapping-file>
         <mapping-file>classpath*:org/jbpm/**/*.hbm.xml</mapping-file>
         <mapping-file>classpath*:com/idega/**/*.hbm.xml</mapping-file>
+        <mapping-file>classpath*:se/fujitsu/**/*.hbm.xml</mapping-file>
         
         <exclude-unlisted-classes/>
         <properties>
