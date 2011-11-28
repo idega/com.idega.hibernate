@@ -13,17 +13,6 @@
 	<name>Hibernate Integration</name>
 	<inceptionYear>2006</inceptionYear>
 	<description>Integration of the Hibernate Peristence Framework into idegaWeb ePlatorm</description>
-	<scm>
-
-		<connection>scm:cvs:ext:idegaweb@code.idega.com:/idega/cvs:com.idega.block.platform/com.idega.hibernate/</connection>
-		<developerConnection>scm:cvs:ext:idegaweb@code.idega.com:/idega/cvs:com.idega.block.platform/com.idega.hibernate/</developerConnection>
-
-		<!--
-			<connection>scm:cvs:ext:idegaweb@code.idega.com:/idega/cvs:com.idega.block.platform/com.idega.hibernate/</connection>
-			<developerConnection>scm:cvs:ext:idegaweb@code.idega.com:/idega/cvs:com.idega.block.platform/com.idega.hibernate/</developerConnection>
-		-->
-    <tag>com_idega_block_platform-4_1_2</tag>
-  </scm>
 
 	<developers>
 		<developer>
@@ -71,12 +60,12 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.5.5</version>
+			<version>${org.slf4j-slf4j-api-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.5.5</version>
+			<version>${org.slf4j-slf4j-api-version}</version>
 		</dependency>
 	</dependencies>
 </project>
