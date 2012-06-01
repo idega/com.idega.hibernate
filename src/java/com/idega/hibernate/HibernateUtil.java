@@ -10,6 +10,7 @@
 package com.idega.hibernate;
 
 
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,14 +18,22 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.persistence.EntityManagerFactory;
+
+import org.hibernate.Hibernate;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.cfg.AnnotationConfiguration;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.ejb.HibernateEntityManagerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.data.DatastoreInterface;
 import com.idega.util.StringUtil;
 import com.idega.util.database.ConnectionBroker;
 import com.idega.util.database.PoolManager;
+import com.idega.util.expression.ELUtil;
 
 /**
  * <p>
@@ -32,6 +41,8 @@ import com.idega.util.database.PoolManager;
  * </p>
  * Last modified: $Date: 2007/09/17 13:32:08 $ by $Author: civilis $
  * 
+ *  Last modified: $Date: 2007/09/17 13:32:08 $ by $Author: civilis $
+ *
  * @author <a href="mailto:tryggvil@idega.com">tryggvil</a>
  * @version $Revision: 1.3 $
  */
@@ -46,7 +57,7 @@ public class HibernateUtil {
 
 		return initializedSessionFactories;
 	}
-
+	
 	public static SessionFactory configure() {
 		try {
 			Logger loggerRoot = Logger.getLogger(HibernateUtil.class.getName());
@@ -91,58 +102,7 @@ public class HibernateUtil {
 			throw new ExceptionInInitializerError(ex);
 		}
 	}
-
-	private static void detectDialect(Properties prop) {
-		detectDialect(prop, null);
-	}
-
-	private static void detectDialect(Properties prop, String dataSourceName) {
-
-		Connection conn = null;
-		try {
-			conn = dataSourceName == null ? ConnectionBroker.getConnection()
-					: ConnectionBroker.getConnection(dataSourceName);
-
-			String dsType = DatastoreInterface.getDataStoreType(conn);
-			String dialectClass = null;
-			if (dsType.equals(DatastoreInterface.DBTYPE_DB2)) {
-				dialectClass = org.hibernate.dialect.DB2Dialect.class.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_DERBY)) {
-				dialectClass = org.hibernate.dialect.DerbyDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_HSQL)) {
-				dialectClass = org.hibernate.dialect.HSQLDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_INFORMIX)) {
-				dialectClass = org.hibernate.dialect.InformixDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_INTERBASE)) {
-				dialectClass = org.hibernate.dialect.FirebirdDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_MCKOI)) {
-				dialectClass = org.hibernate.dialect.MckoiDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_MSSQLSERVER)) {
-				dialectClass = org.hibernate.dialect.SQLServerDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_MYSQL)) {
-				dialectClass = org.hibernate.dialect.MySQLDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_ORACLE)) {
-				dialectClass = org.hibernate.dialect.Oracle8iDialect.class
-						.getName();
-			} else if (dsType.equals(DatastoreInterface.DBTYPE_SAPDB)) {
-				dialectClass = org.hibernate.dialect.SAPDBDialect.class
-						.getName();
-			}
-
-			prop.put("hibernate.dialect", dialectClass);
-		} finally {
-			ConnectionBroker.freeConnection(conn);
-		}
-
-	}
-
+	
 	private static Properties getProperties() {
 		Properties prop = new Properties();
 		if (ConnectionBroker.isUsingIdegaPool()) {
@@ -164,6 +124,107 @@ public class HibernateUtil {
 				IWCacheProvider.class.getName());
 
 		return prop;
+	}
+
+	private static void detectDialect(Properties prop) {
+		detectDialect(prop, null);
+	}
+
+	private static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
+	private static HibernateUtil util = null;
+
+	private HibernateUtil() {
+		util = this;
+	}
+
+	@Autowired
+	private EntityManagerFactory entityManagerFactory;
+
+	public static final HibernateUtil getInstance() {
+		if (util == null)
+			util = new HibernateUtil();
+		return util;
+	}
+
+	private EntityManagerFactory getEntitytManagerFactory() {
+		if (entityManagerFactory == null)
+			ELUtil.getInstance().autowire(this);
+		return entityManagerFactory;
+	}
+
+	private Session getSession() {
+		EntityManagerFactory entityManagerFactory = getEntitytManagerFactory();
+		if (entityManagerFactory instanceof HibernateEntityManagerFactory)
+			return ((HibernateEntityManagerFactory) entityManagerFactory).getSessionFactory().getCurrentSession();
+		return null;
+	}
+
+	/**
+	 * 
+	 * @param getter the method which returns field that should be loaded
+	 * @param entity entity that contains the field
+	 * @param getterParameters getter's parameters
+	 * @return returns the new instance of entity that has it's field initialized.
+	 */
+	public Object loadLazyField(Method getter,Object entity,Object... getterParameters) {
+		Session session = null;
+		Object updated = null;
+		try {
+			session = getSession();
+			Transaction transaction = session.beginTransaction();
+			updated = session.merge(entity);
+			Object value = getter.invoke(updated, getterParameters);
+			Hibernate.initialize(value);
+			transaction.commit();
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error loading lazy value", e);
+		} finally {
+			if ((session != null) && session.isOpen()){
+				session.close();
+			}
+		}
+		return updated;
+	}
+
+	private static void detectDialect(Properties prop, String dataSourceName) {
+
+		Connection conn = null;
+		try{
+			conn = dataSourceName == null ? ConnectionBroker.getConnection() : 
+				ConnectionBroker.getConnection(dataSourceName);
+
+			String dsType = DatastoreInterface.getDataStoreType(conn);
+			String dialectClass = null;
+			if (dsType.equals(DatastoreInterface.DBTYPE_DB2)) {
+				dialectClass = org.hibernate.dialect.DB2Dialect.class.getName();
+			} else if (dsType.equals(DatastoreInterface.DBTYPE_ORACLE)) {
+				dialectClass = org.hibernate.dialect.Oracle8iDialect.class.getName();
+			} else if(dsType.equals(DatastoreInterface.DBTYPE_DERBY)){
+				dialectClass = org.hibernate.dialect.DerbyDialect.class.getName();
+			}
+			//else if(dsType.equals(DatastoreInterface.DBTYPE_H2)){
+			//	dialectClass = org.hibernate.dialect.H2Dialect.class.getName();
+			//}
+			else if(dsType.equals(DatastoreInterface.DBTYPE_HSQL)){
+				dialectClass = org.hibernate.dialect.HSQLDialect.class.getName();
+			} else if(dsType.equals(DatastoreInterface.DBTYPE_INFORMIX)){
+				dialectClass = org.hibernate.dialect.InformixDialect.class.getName();
+			} else if(dsType.equals(DatastoreInterface.DBTYPE_INTERBASE)){
+				dialectClass = org.hibernate.dialect.FirebirdDialect.class.getName();
+			} else if(dsType.equals(DatastoreInterface.DBTYPE_MCKOI)){
+				dialectClass = org.hibernate.dialect.MckoiDialect.class.getName();
+			} else if(dsType.equals(DatastoreInterface.DBTYPE_MSSQLSERVER)){
+				dialectClass = org.hibernate.dialect.SQLServerDialect.class.getName();
+			} else if(dsType.equals(DatastoreInterface.DBTYPE_MYSQL)){
+				dialectClass = org.hibernate.dialect.MySQLDialect.class.getName();
+			} else if(dsType.equals(DatastoreInterface.DBTYPE_SAPDB)){
+				dialectClass = org.hibernate.dialect.SAPDBDialect.class.getName();
+			}
+				
+			prop.put("hibernate.dialect", dialectClass);
+		} finally {
+			ConnectionBroker.freeConnection(conn);
+		}
 	}
 
 	public static SessionFactory getSessionFactory() {
