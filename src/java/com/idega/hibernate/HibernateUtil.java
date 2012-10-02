@@ -10,7 +10,6 @@
 package com.idega.hibernate;
 
 
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,10 +19,8 @@ import java.util.logging.Logger;
 
 import javax.persistence.EntityManagerFactory;
 
-import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.AnnotationConfiguration;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.ejb.HibernateEntityManagerFactory;
@@ -159,32 +156,6 @@ public class HibernateUtil {
 		return null;
 	}
 
-	/**
-	 * 
-	 * @param getter the method which returns field that should be loaded
-	 * @param entity entity that contains the field
-	 * @param getterParameters getter's parameters
-	 * @return returns the new instance of entity that has it's field initialized.
-	 */
-	public Object loadLazyField(Method getter,Object entity,Object... getterParameters) {
-		Session session = null;
-		Object updated = null;
-		try {
-			session = getSession();
-			Transaction transaction = session.beginTransaction();
-			updated = session.merge(entity);
-			Object value = getter.invoke(updated, getterParameters);
-			Hibernate.initialize(value);
-			transaction.commit();
-		} catch (Exception e) {
-			LOGGER.log(Level.WARNING, "Error loading lazy value", e);
-		} finally {
-			if ((session != null) && session.isOpen()){
-				session.close();
-			}
-		}
-		return updated;
-	}
 
 	private static void detectDialect(Properties prop, String dataSourceName) {
 
