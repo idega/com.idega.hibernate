@@ -13,7 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 
-import com.idega.core.persistence.EntityManagerService;
+import com.idega.hibernate.EntityManagerUtil;
 
 
 /**
@@ -33,7 +33,7 @@ public class Test {
 	}
 	
 	public void tryHibernate() {
-		EntityManagerFactory factory = new EntityManagerService().getEntityManagerFactory();
+		EntityManagerFactory factory = EntityManagerUtil.getInstance().getEntityManagerFactory();
 		EntityManager session = factory.createEntityManager();
 		
 		CarBean bigSUV = new CarBean();

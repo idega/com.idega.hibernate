@@ -1,5 +1,5 @@
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)IdegaDefaultPersistenceUnitManager.java    1.0.0 5:05:21 PM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,36 +80,31 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
-
-import java.util.logging.Logger;
-
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
-
-import com.idega.spring.ApplicationContextProvider;
+package org.springframework.orm.jpa.persistenceunit;
 
 /**
- * Class description goes here.
+ * Default implementation of the {@link PersistenceUnitManager} interface.
+ * Used as internal default by
+ * {@link org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean}.
+ *
+ * <p>Supports standard JPA scanning for <code>persistence.xml</code> files,
+ * with configurable file locations, JDBC DataSource lookup and load-time weaving.
+ *
+ * <p>The default XML file location is <code>classpath*:META-INF/persistence.xml</code>,
+ * scanning for all matching files in the class path (as defined in the JPA specification).
+ * DataSource names are by default interpreted as JNDI names, and no load time weaving
+ * is available (which requires weaving to be turned off in the persistence provider).
  * <p>You can report about problems to: 
  * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
- * <p>You can expect to find some test cases notice in the end of the file.</p>
  *
- * @version 1.0.0 Sep 25, 2012
+ * @version 1.0.0 Aug 6, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
 
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
-
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
-
-	    return applicationContext;
-	  }
+public class IdegaDefaultPersistenceUnitManager extends DefaultPersistenceUnitManager{
+	
+//	@Override
+//	protected boolean isPersistenceUnitOverrideAllowed() {
+//		return Boolean.TRUE;
+//	}
 }

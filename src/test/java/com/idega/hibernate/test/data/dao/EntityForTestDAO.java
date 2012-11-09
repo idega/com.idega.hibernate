@@ -1,5 +1,5 @@
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)EntityForTestDAO.java    1.0.0 5:23:00 PM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,14 +80,11 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
+package com.idega.hibernate.test.data.dao;
 
-import java.util.logging.Logger;
+import java.util.List;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
-
-import com.idega.spring.ApplicationContextProvider;
+import com.idega.hibernate.test.data.EntityForTest;
 
 /**
  * Class description goes here.
@@ -95,21 +92,17 @@ import com.idega.spring.ApplicationContextProvider;
  * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
  * <p>You can expect to find some test cases notice in the end of the file.</p>
  *
- * @version 1.0.0 Sep 25, 2012
+ * @version 1.0.0 Sep 21, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
-
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
-
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
-
-	    return applicationContext;
-	  }
+public interface EntityForTestDAO {
+	public static final String BEAN_NAME = "entityForTestDAO";
+	
+	public EntityForTest update(Long id, String name);
+	
+	public boolean delete(Long id);
+	
+	public List<EntityForTest> getByName(String name);
+	
+	public EntityForTest getByID(Long id);
 }

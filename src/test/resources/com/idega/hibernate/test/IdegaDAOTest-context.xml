@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:jee="http://www.springframework.org/schema/jee"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans 
+            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+            http://www.springframework.org/schema/tx 
+            http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+            http://www.springframework.org/schema/context 
+            http://www.springframework.org/schema/context/spring-context-3.0.xsd
+            http://www.springframework.org/schema/aop 
+            http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+            http://www.springframework.org/schema/jee 
+            http://www.springframework.org/schema/jee/spring-jee-3.0.xsd">
+
+	<bean 
+		id="entityForTestDAO"
+		class="com.idega.hibernate.test.data.dao.impl.EntityForTestDAOImpl">
+	</bean>
+
+	<tx:annotation-driven />
+
+	<!-- Datasource -->
+	<bean id="idegaTestDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="url" value="jdbc:hsqldb:mem:test" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+
+	<!-- JPA -->
+
+	<!-- Resolver for searching ORM files in Idega packages -->
+	<!-- <bean id="idegaTestORMPatternResolver" class="com.idega.core.persistence.impl.OrmPathPatternMatchingResolver"> 
+		<property name="resourceResolver"> <bean class="org.springframework.core.io.support.PathMatchingResourcePatternResolver" 
+		/> </property> </bean> -->
+
+	<!-- entity manager for "JPA" implementation -->
+	<bean id="idegaTestEntityManagerFactory"
+		class="org.springframework.orm.jpa.IdegaLocalContainerEntityManagerFactoryBean">
+		<property name="dataSource" ref="idegaTestDataSource" />
+		<property name="persistenceUnitName" value="idegaTestPersistanceUnit" />
+
+		<!-- <property name="persistenceUnitPostProcessors" ref="idegaORMPatternResolver" 
+			/> -->
+	</bean>
+
+	<!--Transaction manager for "JPA" implementation -->
+	<bean id="idegaJPATestTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="idegaTestEntityManagerFactory" />
+	</bean>
+
+	<!-- Hibernate -->
+
+	<!-- Session Factory for "Hibernate" implementation -->
+	<bean id="idegaTestSessionFactory" factory-bean="idegaTestEntityManagerFactory"
+		factory-method="getSessionFactory">
+	</bean>
+
+	<!-- Transaction manager for "Hibernate" implementation. -->
+	<bean id="idegaHibernateTestTransactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="idegaTestSessionFactory" />
+	</bean>
+</beans>

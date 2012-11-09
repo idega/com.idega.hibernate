@@ -1,5 +1,10 @@
+package com.idega.hibernate.test;
+import org.springframework.orm.hibernate3.HibernateTransactionManager;
+
+import com.idega.hibernate.SessionFactoryUtil;
+
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)HibernateTestsUtil.java    1.0.0 3:51:20 PM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,36 +85,23 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
-
-import java.util.logging.Logger;
-
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
-
-import com.idega.spring.ApplicationContextProvider;
 
 /**
- * Class description goes here.
+ * <p>Hibernate tests util for reaching testing database.</p>
  * <p>You can report about problems to: 
  * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
  * <p>You can expect to find some test cases notice in the end of the file.</p>
  *
- * @version 1.0.0 Sep 25, 2012
+ * @version 1.0.0 Sep 21, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
+public class SessionFactoryTestUtil extends SessionFactoryUtil {
 
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
-
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
-
-	    return applicationContext;
-	  }
+	/* (non-Javadoc)
+	 * @see com.idega.hibernate.HibernateUtil#getHibernateTransactionManager()
+	 */
+	@Override
+	public HibernateTransactionManager getHibernateTransactionManager() {
+		return super.getHibernateTransactionManager("idegaHibernateTestTransactionManager");
+	}
 }

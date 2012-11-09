@@ -1,5 +1,5 @@
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)IdegaLocalContainerEntityManagerFactoryBean.java    1.0.0 4:38:42 PM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,36 +80,99 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
+package org.springframework.orm.jpa;
 
-import java.util.logging.Logger;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceException;
+import javax.sql.DataSource;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
-
-import com.idega.spring.ApplicationContextProvider;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.instrument.classloading.LoadTimeWeaver;
+import org.springframework.jdbc.datasource.lookup.SingleDataSourceLookup;
+import org.springframework.orm.jpa.persistenceunit.IdegaDefaultPersistenceUnitManager;
+import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
 
 /**
- * Class description goes here.
+ * <p>We got two persistence.xml files, which are same, but in different 
+ * locations. Spring 3.1.1.RELEASE does not ignore that, so we override existing 
+ * classes to make Spring ignore two identical persistence unit.
+ * It is a HACK, so it should be solved sooner or later, when author will
+ * have some ideas about this problem.</p>
  * <p>You can report about problems to: 
  * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
  * <p>You can expect to find some test cases notice in the end of the file.</p>
  *
- * @version 1.0.0 Sep 25, 2012
+ * @version 1.0.0 Aug 6, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
+public class IdegaLocalContainerEntityManagerFactoryBean extends
+		LocalContainerEntityManagerFactoryBean {
 
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
+	private IdegaDefaultPersistenceUnitManager idpum = new IdegaDefaultPersistenceUnitManager();
+	
+	@Override
+	protected EntityManagerFactory createNativeEntityManagerFactory() throws PersistenceException {
+		this.idpum.afterPropertiesSet();
+		setPersistenceUnitManager(this.idpum);
+		return super.createNativeEntityManagerFactory();
+	}
 
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
+	@Override
+	public void setPersistenceXmlLocation(String persistenceXmlLocation) {
+		this.idpum.setPersistenceXmlLocation(persistenceXmlLocation);
+		super.setPersistenceXmlLocation(persistenceXmlLocation);
+	}
 
-	    return applicationContext;
-	  }
+//	@Override
+//	public void setPersistenceUnitName(String persistenceUnitName) {
+//		this.idpum.setDefaultPersistenceUnitName(persistenceUnitName);
+//		super.setPersistenceUnitName(persistenceUnitName);
+//	}
+//
+//	@Override
+//	public void setPackagesToScan(String... packagesToScan) {
+//		this.idpum.setPackagesToScan(packagesToScan);
+//		super.setPackagesToScan(packagesToScan);
+//	}
+//
+//	@Override
+//	public void setMappingResources(String... mappingResources) {
+//		this.idpum.setMappingResources(mappingResources);
+//		super.setMappingResources(mappingResources);
+//	}
+
+	@Override
+	public void setDataSource(DataSource dataSource) {
+		this.idpum.setDataSourceLookup(new SingleDataSourceLookup(dataSource));
+		this.idpum.setDefaultDataSource(dataSource);
+		super.setDataSource(dataSource);
+	}
+
+	
+	
+//	@Override
+//	public void setPersistenceUnitPostProcessors(
+//			PersistenceUnitPostProcessor... postProcessors) {
+//		this.idpum.setPersistenceUnitPostProcessors(postProcessors);
+//		super.setPersistenceUnitPostProcessors(postProcessors);
+//	}
+
+	@Override
+	public void setPersistenceUnitPostProcessors(
+			PersistenceUnitPostProcessor[] postProcessors) {
+		this.idpum.setPersistenceUnitPostProcessors(postProcessors);
+		super.setPersistenceUnitPostProcessors(postProcessors);
+	}
+
+	@Override
+	public void setLoadTimeWeaver(LoadTimeWeaver loadTimeWeaver) {
+		this.idpum.setLoadTimeWeaver(loadTimeWeaver);
+		super.setLoadTimeWeaver(loadTimeWeaver);
+	}
+
+	@Override
+	public void setResourceLoader(ResourceLoader resourceLoader) {
+		this.idpum.setResourceLoader(resourceLoader);
+		super.setResourceLoader(resourceLoader);
+	}
 }

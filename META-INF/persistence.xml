@@ -2,31 +2,31 @@
 <persistence xmlns="http://java.sun.com/xml/ns/persistence"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
-      http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
-  version="1.0">
+      http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+  version="2.0">
 
-    <persistence-unit name="idegaHibernate" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="idegaPersistanceUnit">
 
         <provider>org.hibernate.ejb.HibernatePersistence</provider>
         
         <mapping-file>classpath*:com/idega/**/orm*.xml</mapping-file>
         <mapping-file>classpath*:is/idega/**/orm*.xml</mapping-file>
-        <mapping-file>classpath*:is/illuminati/**/orm*.xml</mapping-file>
+       	<mapping-file>classpath*:is/illuminati/**/orm*.xml</mapping-file>
         <mapping-file>classpath*:se/fujitsu/**/orm*.xml</mapping-file>
-        <mapping-file>classpath*:org/jbpm/**/*.hbm.xml</mapping-file>
+ 	    <mapping-file>classpath*:org/jbpm/**/*.hbm.xml</mapping-file>
         <mapping-file>classpath*:com/idega/**/*.hbm.xml</mapping-file>
         <mapping-file>classpath*:se/fujitsu/**/*.hbm.xml</mapping-file>
-        
+        <mapping-file>classpath*:com/idega/**/**/**/*.hbm.xml</mapping-file>
+        <mapping-file>classpath*:com/idega/**/**/*.hbm.xml</mapping-file>
+         
         <exclude-unlisted-classes/>
+        
+        <validation-mode>NONE</validation-mode>
+        
         <properties>
-            <!-- 
-            doesn't work 
-            <property name="hibernate.archive.autodetection" value="hbm"/>
-            -->
-            
-            <property name="hibernate.ejb.cfgfile" value="/com/idega/hibernate/hibernate.cfg.xml" />
+        	<property 	name="hibernate.ejb.metamodel.generation" 
+        				value="disabled" />
         </properties>
-             
     </persistence-unit>
     
 </persistence>

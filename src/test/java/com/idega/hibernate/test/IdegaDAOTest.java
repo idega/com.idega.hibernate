@@ -1,5 +1,5 @@
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)IdegaDAOTest.java    1.0.0 4:25:00 PM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,36 +80,63 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
+package com.idega.hibernate.test;
 
 import java.util.logging.Logger;
 
+import org.junit.After;
+import org.junit.Before;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
-
-import com.idega.spring.ApplicationContextProvider;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
+import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Class description goes here.
+ * <p>All magical tests for data access objects goes here.</p>
  * <p>You can report about problems to: 
  * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
  * <p>You can expect to find some test cases notice in the end of the file.</p>
  *
- * @version 1.0.0 Sep 25, 2012
+ * @version 1.0.0 Sep 21, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
-
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
-
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
-
-	    return applicationContext;
-	  }
+@TransactionConfiguration(transactionManager="idegaHibernateTestTransactionManager", defaultRollback=false)
+@Transactional
+@ContextConfiguration
+public class IdegaDAOTest extends AbstractTransactionalJUnit4SpringContextTests {
+	private static final Logger LOGGER = Logger.getLogger(
+			IdegaDAOTest.class.getName());
+	
+	@Autowired
+	private ApplicationContext ctx;
+	
+	public ApplicationContext getApplicationContext() {
+		return this.ctx;
+	}
+	
+	@Before
+	public void before() {
+		setApplicationContext(getApplicationContext());
+	}
+	
+	@After
+	public void after() {
+		
+	}
+	
+	protected Logger getLogger() {
+		return LOGGER;
+	}
+	
+	protected <T> T getDAO(Class<T> daoInteface, String beanName) {
+		if (daoInteface == null || beanName == null || beanName.isEmpty()) {
+			return null;
+		}
+		
+		T bean = (T) applicationContext.getBean(beanName);
+		
+		return bean;
+	}
 }

@@ -1,5 +1,5 @@
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)EntityManagerTestUtil.java    1.0.0 4:33:31 PM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,36 +80,43 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
+package com.idega.hibernate.test;
 
-import java.util.logging.Logger;
+import org.springframework.orm.jpa.JpaTransactionManager;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
-
-import com.idega.spring.ApplicationContextProvider;
+import com.idega.hibernate.EntityManagerUtil;
 
 /**
  * Class description goes here.
- * <p>You can report about problems to: 
- * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
- * <p>You can expect to find some test cases notice in the end of the file.</p>
- *
- * @version 1.0.0 Sep 25, 2012
+ * <p>
+ * You can report about problems to: <a
+ * href="mailto:martynas@idega.com">Martynas Stakė</a>
+ * </p>
+ * <p>
+ * You can expect to find some test cases notice in the end of the file.
+ * </p>
+ * 
+ * @version 1.0.0 Sep 24, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
+public class EntityManagerTestUtil extends EntityManagerUtil {
 
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
+	private static EntityManagerTestUtil emtu = new EntityManagerTestUtil() ;
 
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
+	protected EntityManagerTestUtil() {}
 
-	    return applicationContext;
-	  }
+	public static EntityManagerTestUtil getInstance() {
+		return emtu;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.idega.hibernate.EntityManagerUtil#getJpaTransactionManager()
+	 */
+	@Override
+	public JpaTransactionManager getJpaTransactionManager() {
+		return getJpaTransactionManager("idegaJPATestTransactionManager");
+	}
+
 }

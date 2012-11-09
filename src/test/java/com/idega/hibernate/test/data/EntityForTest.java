@@ -1,5 +1,5 @@
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)JPAEntityForTest.java    1.0.0 5:08:14 PM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,36 +80,72 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
+package com.idega.hibernate.test.data;
 
-import java.util.logging.Logger;
-
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
-
-import com.idega.spring.ApplicationContextProvider;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 
 /**
- * Class description goes here.
+ * <p>Sample JPA entity to ensure if Idega testing system working fine...</p>
  * <p>You can report about problems to: 
  * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
  * <p>You can expect to find some test cases notice in the end of the file.</p>
  *
- * @version 1.0.0 Sep 25, 2012
+ * @version 1.0.0 Sep 21, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
 
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
+@Entity
+@Table(name = "IC_ARTICLE")
+@NamedQueries(
+	{
+		@NamedQuery(name = EntityForTest.GET_BY_NAME, query = "from EntityForTest s where s.name = :"+ EntityForTest.nameProp),
+		@NamedQuery(name = EntityForTest.GET_BY_ID, query = "from EntityForTest s where s.id = :"+ EntityForTest.idProp)
+	}
+)
+public class EntityForTest {
+	public static final String 	GET_BY_NAME = "entityForTest.getByName",
+								GET_BY_ID = "entityForTest.getById";
+	
+	public static final String nameProp = "name";
+	@Column(name = "name", nullable=false)
+	private String name;
+	
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
 
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
 
-	    return applicationContext;
-	  }
+	public static final String idProp = "id";
+	@Id @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+	
+	/**
+	 * @return the id
+	 */
+	public Long getId() {
+		return id;
+	}
+	
+	/**
+	 * @param id the id to set
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
 }

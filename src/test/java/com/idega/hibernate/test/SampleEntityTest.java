@@ -1,5 +1,5 @@
 /**
- * @(#)HibernateUtil.java    1.0.0 12:45:53 PM
+ * @(#)SampleEntityTest.java    1.0.0 10:14:01 AM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,14 +80,15 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
+package com.idega.hibernate.test;
 
-import java.util.logging.Logger;
+import static org.junit.Assert.*;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
+import org.junit.Test;
+import org.springframework.test.annotation.Rollback;
 
-import com.idega.spring.ApplicationContextProvider;
+import com.idega.hibernate.test.data.EntityForTest;
+import com.idega.hibernate.test.data.dao.EntityForTestDAO;
 
 /**
  * Class description goes here.
@@ -95,21 +96,39 @@ import com.idega.spring.ApplicationContextProvider;
  * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
  * <p>You can expect to find some test cases notice in the end of the file.</p>
  *
- * @version 1.0.0 Sep 25, 2012
+ * @version 1.0.0 Sep 24, 2012
  * @author martynasstake
  */
-public class HibernateUtil {
-	public static final String TRANSACTION_MANAGER_NAME = "transactionManager";
-	  protected static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
-
-	  protected ApplicationContext getApplicationContext()
-	  {
-	    ApplicationContext applicationContext = ContextLoader.getCurrentWebApplicationContext();
-
-	    if (applicationContext == null) {
-	      applicationContext = ApplicationContextProvider.getApplicationContext();
-	    }
-
-	    return applicationContext;
-	  }
+public class SampleEntityTest extends IdegaDAOTest {
+	
+//	@Test
+//    @Rollback(true)
+//    public void quickTest() {
+//        String sql;
+//        // fields renamed to protect the innocent :-)
+//        sql = "INSERT INTO Gear (Gear_Id, fld2, fld3, fld4, fld5, fld6, fld7) " +
+//              " VALUES (?,?,?,?,?,?,?)";
+//        simpleJdbcTemplate.update(sql, 1L, 1L, 1L, "fld4", "fld5", new Date(), "fld7");
+//        assertEquals(1L, simpleJdbcTemplate.queryForLong("select Gear_Id from Gear where Gear_Id = 1"));
+//        System.out.println(gearDao);
+//
+//        Gear gear = gearDao.findById(1L);
+//        assertNotNull("gear is null.", gear);  // <== This fails.
+//    }
+	
+	@Test
+	@Rollback(true)
+	public void updateTest() {
+		EntityForTestDAO dao = getDAO(EntityForTestDAO.class, EntityForTestDAO.BEAN_NAME);
+		assertNotNull("Data Access Object is null.", dao);
+		
+		String name = "vardas";
+		EntityForTest entity = dao.update(-1L, name);
+		assertNotNull("Failed to save entity with name: " + name + 
+				"to database.", entity);
+		
+		EntityForTest databaseEntity = dao.getByID(entity.getId());
+		assertNotNull("Failed to fetch entity with name: " + name + 
+				"from database database.", databaseEntity);
+	}
 }

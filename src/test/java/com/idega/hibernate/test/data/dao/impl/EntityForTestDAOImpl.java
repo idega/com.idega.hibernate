@@ -1,5 +1,5 @@
 /**
- * @(#)SessionFactoryHelper.java    1.0.0 2:57:50 PM
+ * @(#)EntityForTestDAOImpl.java    1.0.0 8:36:11 AM
  *
  * Idega Software hf. Source Code Licence Agreement x
  *
@@ -80,73 +80,143 @@
  *     License that was purchased to become eligible to receive the Source 
  *     Code after Licensee receives the source code. 
  */
-package com.idega.hibernate;
+package com.idega.hibernate.test.data.dao.impl;
 
-import javax.persistence.EntityManagerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.hibernate.SessionFactory;
-import org.hibernate.ejb.HibernateEntityManagerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
-import com.idega.util.expression.ELUtil;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Repository;
+
+import com.idega.hibernate.test.EntityManagerTestUtil;
+import com.idega.hibernate.test.data.EntityForTest;
+import com.idega.hibernate.test.data.dao.EntityForTestDAO;
 
 /**
- * <p>
- * Class for helping to get {@link SessionFactory}. A singleton.
- * </p>
- * <p>
- * You can report about problems to: <a
- * href="mailto:martynas@idega.com">Martynas Stakė</a>
- * </p>
- * <p>
- * You can expect to find some test cases notice in the end of the file.
- * </p>
- * 
- * @version 1.0.0 Apr 5, 2012
+ * Class description goes here.
+ * <p>You can report about problems to: 
+ * <a href="mailto:martynas@idega.com">Martynas Stakė</a></p>
+ * <p>You can expect to find some test cases notice in the end of the file.</p>
+ *
+ * @version 1.0.0 Sep 24, 2012
  * @author martynasstake
  */
-public class SessionFactoryHelper {
-	private static SessionFactory sessionFactory = null;
-	private static SessionFactoryHelper helper;
-	
-	@Autowired
-	private EntityManagerFactory entityManagerFactory;
-	
-	static {
-		helper = new SessionFactoryHelper();
-	}
-	
-	private SessionFactoryHelper() {
-		sessionFactory  = ((HibernateEntityManagerFactory) getEntityManagerFactory()).getSessionFactory();
-	}
 
-	/**
-	 * @return instance of {@link SessionFactoryHelper}.
-	 * @author <a href="mailto:martynas@idega.com">Martynas Stakė</a>
-	 */
-	public static SessionFactoryHelper getInstance() {
-		return helper;
-	}
+@Repository(EntityForTestDAO.BEAN_NAME)
+@Scope(BeanDefinition.SCOPE_SINGLETON)
+public class EntityForTestDAOImpl implements EntityForTestDAO {
 	
-	/**
-	 * <p>A method for other application to get SessionFactory object
-	 * initialized in this helper class.</p>
-	 * @return {@link SessionFactory} instance of started system.
-	 */
-	public SessionFactory getSessionFactory() {
-		return sessionFactory;
-	}
-	
-	/**
-	 * <p>Initiates {@link EntityManagerFactory}, if not initiated.</p>
-	 * @return autowired {@link EntityManagerFactory}.
-	 * @author <a href="mailto:martynas@idega.com">Martynas Stakė</a>
-	 */
-	private EntityManagerFactory getEntityManagerFactory() {
-		if (entityManagerFactory == null) {
-			ELUtil.getInstance().autowire(this);
+	private EntityManager em = null;
+	private EntityManager getEntityManager() {
+		if (this.em == null) {
+			this.em = EntityManagerTestUtil.getInstance().getEntityManager();
 		}
 		
-		return entityManagerFactory;
+		return this.em;
 	}
+	
+	/* (non-Javadoc)
+	 * @see com.idega.hibernate.test.data.dao.EntityForTestDAO#update(
+	 * 		java.lang.Long, java.lang.String
+	 * )
+	 */
+	@Override
+	public EntityForTest update(Long id, String name) {
+		if (id == null || name == null) {
+			return null;
+		}
+		
+		EntityForTest entity = getByID(id);
+		if (entity != null) {
+			entity.setName(name);
+			entity = getEntityManager().merge(entity);
+		} else {
+			entity = new EntityForTest();
+			entity.setName(name);
+			getEntityManager().persist(entity);
+		}
+		
+		if (getEntityManager().isOpen()) {
+			getEntityManager().close();
+		}
+		
+		return entity;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.idega.hibernate.test.data.dao.EntityForTestDAO#delete(
+	 * 		java.lang.Long
+	 * )
+	 */
+	@Override
+	public boolean delete(Long id) {
+		if (id == null) {
+			return Boolean.FALSE;
+		}
+		
+		EntityForTest entity = getByID(id);
+		if (entity == null) {
+			return Boolean.FALSE;
+		}
+		
+		getEntityManager().remove(entity);
+		
+		if (getEntityManager().isOpen()) {
+			getEntityManager().close();
+		}
+		
+		return Boolean.TRUE;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.idega.hibernate.test.data.dao.EntityForTestDAO#getByName(
+	 * 		java.lang.String
+	 * )
+	 */
+	@Override
+	public List<EntityForTest> getByName(String name) {
+		if (name == null || name.isEmpty()) {
+			return null;
+		}
+		
+		Query query = getEntityManager().createNamedQuery(EntityForTest.GET_BY_NAME);
+		query = query.setParameter(EntityForTest.nameProp, name);
+		List<?> results = query.getResultList();
+		
+		if (getEntityManager().isOpen()) {
+			getEntityManager().close();
+		}
+		
+		if (results == null) {
+			return null;
+		}
+		
+		List<EntityForTest> entitiesList = new ArrayList<EntityForTest>();
+		for (Object entity : results) {
+			if (entity instanceof EntityForTest) {
+				entitiesList.add((EntityForTest) entity);
+			}
+		}
+		
+		return entitiesList;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.idega.hibernate.test.data.dao.EntityForTestDAO#getByID(
+	 * 		java.lang.Long
+	 * )
+	 */
+	@Override
+	public EntityForTest getByID(Long id) {
+		if (id == null) {
+			return null;
+		}
+		
+		return getEntityManager().find(EntityForTest.class, id);
+	}
+
 }
