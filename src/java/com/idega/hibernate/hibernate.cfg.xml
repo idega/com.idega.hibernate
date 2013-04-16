@@ -6,8 +6,6 @@
 
 <hibernate-configuration>
   <session-factory>
-
-    <property name="hibernate.cache.provider_class">org.hibernate.cache.HashtableCacheProvider</property>
     
     <!-- 
     <Automatically create and drop schema when starting/closing application> 

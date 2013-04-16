@@ -7,6 +7,7 @@
 
     <persistence-unit name="idegaHibernate" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.ejb.HibernatePersistence</provider>
+       
         
         <mapping-file>classpath*:com/idega/**/orm*.xml</mapping-file>
         <mapping-file>classpath*:is/idega/**/orm*.xml</mapping-file>
@@ -17,10 +18,12 @@
         <mapping-file>classpath*:se/fujitsu/**/*.hbm.xml</mapping-file>
         <exclude-unlisted-classes/>
 
+        <shared-cache-mode>ENABLE_SELECTIVE</shared-cache-mode>
+
         <properties>
             <property name="hibernate.ejb.cfgfile" value="/com/idega/hibernate/hibernate.cfg.xml" />
         </properties>
-             
+
     </persistence-unit>
     
 </persistence>
