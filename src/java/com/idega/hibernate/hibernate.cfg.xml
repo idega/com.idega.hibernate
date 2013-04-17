@@ -7,6 +7,8 @@
 <hibernate-configuration>
   <session-factory>
     
+    <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
+    
     <!-- 
     <Automatically create and drop schema when starting/closing application> 
     -->
