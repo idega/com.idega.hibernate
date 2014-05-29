@@ -20,7 +20,7 @@
     <!-- 
     <DataSource properties> 
     -->
-    <!-- FIXME: make this setable as it is in slide -->
+    <!-- FIXME: make this setable as it is in repository -->
     <property name="hibernate.connection.datasource">java:comp/env/jdbc/DefaultDS</property>
     <!-- 
     </DataSource properties> 
