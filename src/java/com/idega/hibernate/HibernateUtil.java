@@ -40,6 +40,10 @@ public class HibernateUtil extends DBUtil {
 
 	@Override
 	public <T> T lazyLoad(T entity) {
+		if (isInitialized(entity)) {
+			return entity;
+		}
+
 		org.hibernate.Session s = null;
 		Transaction transaction = null;
 		try {
