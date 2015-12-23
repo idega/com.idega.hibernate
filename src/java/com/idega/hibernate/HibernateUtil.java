@@ -1,5 +1,7 @@
 package com.idega.hibernate;
 
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,6 +13,8 @@ import org.hibernate.ejb.HibernateQuery;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.idega.core.cache.IWCacheManager2;
+import com.idega.idegaweb.IWMainApplication;
 import com.idega.util.DBUtil;
 
 @Transactional(readOnly = true)
@@ -56,7 +60,7 @@ public class HibernateUtil extends DBUtil {
 			s.refresh(entity);
 			entity = initializeAndUnproxy(entity);
 		} catch (Exception e) {
-			LOGGER.log(Level.WARNING, "Error initializing entity " + entity, e);
+			LOGGER.log(Level.WARNING, "Error initializing entity ", e);
 		} finally {
 			transaction.commit();
 			if (s.isOpen()) {
@@ -85,6 +89,22 @@ public class HibernateUtil extends DBUtil {
 		} else {
 			LOGGER.warning("Query is not type of " + org.hibernate.Query.class.getName() + ", can not use caching");
 		}
+	}
+
+	private <T> Map<String, List<T>> getCache(String name) {
+		return IWCacheManager2.getInstance(IWMainApplication.getDefaultIWMainApplication()).getCache(name, 30000000, true, false, 86400);
+	}
+
+	@Override
+	public <T> void setCache(String name, List<T> entities) {
+		Map<String, List<T>> cache = getCache(name);
+		cache.put(name, entities);
+	}
+
+	@Override
+	public <T> List<T> getCachedEntities(String name) {
+		Map<String, List<T>> cache = getCache(name);
+		return cache.get(name);
 	}
 
 }
