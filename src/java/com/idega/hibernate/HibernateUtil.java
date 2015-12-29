@@ -1,5 +1,8 @@
 package com.idega.hibernate;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -9,12 +12,14 @@ import javax.persistence.Query;
 
 import org.hibernate.Hibernate;
 import org.hibernate.Transaction;
+import org.hibernate.collection.internal.PersistentBag;
 import org.hibernate.ejb.HibernateQuery;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
+import com.idega.util.ArrayUtil;
 import com.idega.util.DBUtil;
 
 @Transactional(readOnly = true)
@@ -57,10 +62,28 @@ public class HibernateUtil extends DBUtil {
 				LOGGER.warning("Session is not opened, can not lazy load entity!");
 			}
 
-			s.refresh(entity);
+			if (entity instanceof HibernateProxy) {
+				try {
+					s.refresh(entity);
+				} catch (ClassCastException e) {
+					LOGGER.log(Level.WARNING, "Error refreshing entity", e);
+				}
+			} else if (entity instanceof PersistentBag) {
+				PersistentBag persistentBag = (PersistentBag) entity;
+				if (persistentBag.getSession() == null) {
+					Object[] entities = persistentBag.toArray();
+					if (!ArrayUtil.isEmpty(entities)) {
+						@SuppressWarnings("unchecked")
+						T results = (T) new ArrayList<T>((Collection<? extends T>) Arrays.asList(entities));
+						return results;
+					}
+				} else {
+					LOGGER.info("Persistent bag has session!");
+				}
+			}
 			entity = initializeAndUnproxy(entity);
 		} catch (Exception e) {
-			LOGGER.log(Level.WARNING, "Error initializing entity ", e);
+			LOGGER.log(Level.WARNING, "Error initializing entity", e);
 		} finally {
 			transaction.commit();
 			if (s.isOpen()) {
