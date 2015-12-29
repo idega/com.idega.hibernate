@@ -1,7 +1,5 @@
 package com.idega.hibernate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -12,14 +10,13 @@ import javax.persistence.Query;
 
 import org.hibernate.Hibernate;
 import org.hibernate.Transaction;
-import org.hibernate.collection.internal.PersistentBag;
+import org.hibernate.collection.internal.AbstractPersistentCollection;
 import org.hibernate.ejb.HibernateQuery;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
-import com.idega.util.ArrayUtil;
 import com.idega.util.DBUtil;
 
 @Transactional(readOnly = true)
@@ -53,6 +50,7 @@ public class HibernateUtil extends DBUtil {
 			return entity;
 		}
 
+		boolean canInitialize = true;
 		org.hibernate.Session s = null;
 		Transaction transaction = null;
 		try {
@@ -68,20 +66,23 @@ public class HibernateUtil extends DBUtil {
 				} catch (ClassCastException e) {
 					LOGGER.log(Level.WARNING, "Error refreshing entity", e);
 				}
-			} else if (entity instanceof PersistentBag) {
-				PersistentBag persistentBag = (PersistentBag) entity;
-				if (persistentBag.getSession() == null) {
-					Object[] entities = persistentBag.toArray();
-					if (!ArrayUtil.isEmpty(entities)) {
-						@SuppressWarnings("unchecked")
-						T results = (T) new ArrayList<T>((Collection<? extends T>) Arrays.asList(entities));
-						return results;
-					}
-				} else {
-					LOGGER.info("Persistent bag has session!");
+			} else if (entity instanceof AbstractPersistentCollection) {
+				AbstractPersistentCollection persistentCollection = (AbstractPersistentCollection) entity;
+				Object value = persistentCollection.getValue();
+				if (value instanceof Collection) {
+					@SuppressWarnings("unchecked")
+					T result = (T) value;
+					return result;
+				} else if (persistentCollection.getSession() == null) {
+					canInitialize = false;
 				}
 			}
-			entity = initializeAndUnproxy(entity);
+
+			if (canInitialize) {
+				entity = initializeAndUnproxy(entity);
+			} else {
+				LOGGER.warning("Can not initialize " + entity.getClass().getName());
+			}
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error initializing entity", e);
 		} finally {
