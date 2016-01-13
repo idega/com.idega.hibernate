@@ -9,9 +9,13 @@ import java.util.logging.Logger;
 import javax.persistence.Query;
 
 import org.hibernate.Hibernate;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.collection.internal.AbstractPersistentCollection;
 import org.hibernate.ejb.HibernateQuery;
+import org.hibernate.internal.SessionFactoryImpl;
+import org.hibernate.internal.SessionImpl;
+import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +23,7 @@ import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.util.DBUtil;
 
+@SuppressWarnings("deprecation")
 @Transactional(readOnly = true)
 public class HibernateUtil extends DBUtil {
 
@@ -50,31 +55,77 @@ public class HibernateUtil extends DBUtil {
 			return entity;
 		}
 
+		boolean closeSession = false, closeTransaction = false;
 		boolean canInitialize = true;
 		org.hibernate.Session s = null;
 		Transaction transaction = null;
 		try {
-			s = SessionFactoryHelper.getInstance().getSessionFactory().openSession();
-			transaction = s.beginTransaction();
-			if (!s.isConnected()) {
-				LOGGER.warning("Session is not opened, can not lazy load entity!");
+			SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
+			s = sessionFactory.getCurrentSession();
+			if (!(s instanceof SessionImpl) || !s.isOpen()) {
+				closeSession = true;
+				s = sessionFactory.openSession();
 			}
 
 			if (entity instanceof HibernateProxy) {
+				transaction = s.getTransaction();
+				if (transaction == null || !transaction.isActive()) {
+					closeTransaction = true;
+					transaction = s.beginTransaction();
+				}
+				if (!s.isConnected()) {
+					LOGGER.warning("Session is not opened, can not lazy load " + entity.getClass().getName());
+				}
+
 				try {
 					s.refresh(entity);
 				} catch (ClassCastException e) {
-					LOGGER.log(Level.WARNING, "Error refreshing entity", e);
+					LOGGER.log(Level.WARNING, "Error refreshing entity " + entity.getClass().getName(), e);
 				}
 			} else if (entity instanceof AbstractPersistentCollection) {
-				AbstractPersistentCollection persistentCollection = (AbstractPersistentCollection) entity;
-				Object value = persistentCollection.getValue();
-				if (value instanceof Collection) {
-					@SuppressWarnings("unchecked")
-					T result = (T) value;
-					return result;
-				} else if (persistentCollection.getSession() == null) {
-					canInitialize = false;
+				AbstractPersistentCollection collection = (AbstractPersistentCollection) entity;
+//				try {
+//					if (persistentCollection.getSession() == null) {
+////						persistentCollection.setCurrentSession((SessionImpl) s);
+////						persistentCollection.forceInitialization();
+//
+//
+//					}
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+				Object value = collection.getValue();
+				try {
+					if (value instanceof Collection && isInitialized(value)) {
+						@SuppressWarnings("unchecked")
+						T result = (T) value;
+						return result;
+					} else if (s instanceof SessionImpl) {
+						SessionImpl session = (SessionImpl) s;
+						CollectionPersister persister = ((SessionFactoryImpl) sessionFactory).getCollectionPersister(collection.getRole());
+						collection.beforeInitialize(persister, -1);
+						session.getPersistenceContext().addUninitializedDetachedCollection(persister, collection);
+						if (collection.getSession() == null) {
+							collection.setCurrentSession(session);
+						}
+						session.initializeCollection(collection, false);
+
+//						CollectionPersister collectionPersister = ((SessionFactoryImpl) sessionFactory).getCollectionPersister(persistentCollection.getRole());
+//						collectionPersister.initialize(persistentCollection.getKey(), (SessionImpl) s);
+//						Object o = collectionPersister.getCollectionType().instantiate(20);
+						value = collection.getValue();
+						@SuppressWarnings("unchecked")
+						T result = (T) value;
+						return result;
+
+//						session.initializeCollection(persistentCollection, false);
+
+
+//						CollectionEntry entry = ((SessionImpl) s).getPersistenceContext().getCollectionEntry(persistentCollection);
+//						return entry == null ? : entry.;
+					}
+				} catch (Exception e) {
+					LOGGER.log(Level.WARNING, "Error initializing lazy collection: " + collection.getRole() + ", ID: " + collection.getKey(), e);
 				}
 			}
 
@@ -86,8 +137,10 @@ public class HibernateUtil extends DBUtil {
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error initializing entity", e);
 		} finally {
-			transaction.commit();
-			if (s.isOpen()) {
+			if (closeTransaction && transaction != null) {
+				transaction.commit();
+			}
+			if (closeSession && (s != null && s.isOpen())) {
 				s.close();
 			}
 		}
