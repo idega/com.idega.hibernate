@@ -1,6 +1,8 @@
 package com.idega.hibernate;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -12,6 +14,9 @@ import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.collection.internal.AbstractPersistentCollection;
+import org.hibernate.collection.internal.PersistentBag;
+import org.hibernate.collection.internal.PersistentList;
+import org.hibernate.collection.internal.PersistentSet;
 import org.hibernate.ejb.HibernateQuery;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
@@ -114,9 +119,21 @@ public class HibernateUtil extends DBUtil {
 //						collectionPersister.initialize(persistentCollection.getKey(), (SessionImpl) s);
 //						Object o = collectionPersister.getCollectionType().instantiate(20);
 						value = collection.getValue();
-						@SuppressWarnings("unchecked")
-						T result = (T) value;
-						return result;
+						if (value instanceof Collection) {
+							if (value instanceof PersistentBag || value instanceof PersistentList) {
+								@SuppressWarnings("unchecked")
+								T result = (T) new ArrayList<T>((Collection<T>) value);
+								return result;
+							} else if (value instanceof PersistentSet) {
+								@SuppressWarnings("unchecked")
+								T result = (T) new HashSet<T>((Collection<T>) value);
+								return result;
+							}
+						} else {
+							@SuppressWarnings("unchecked")
+							T result = (T) value;
+							return result;
+						}
 
 //						session.initializeCollection(persistentCollection, false);
 
