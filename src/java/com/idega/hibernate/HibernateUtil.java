@@ -89,16 +89,6 @@ public class HibernateUtil extends DBUtil {
 				}
 			} else if (entity instanceof AbstractPersistentCollection) {
 				AbstractPersistentCollection collection = (AbstractPersistentCollection) entity;
-//				try {
-//					if (persistentCollection.getSession() == null) {
-////						persistentCollection.setCurrentSession((SessionImpl) s);
-////						persistentCollection.forceInitialization();
-//
-//
-//					}
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
 				Object value = collection.getValue();
 				try {
 					if (value instanceof Collection && isInitialized(value)) {
@@ -115,9 +105,6 @@ public class HibernateUtil extends DBUtil {
 						}
 						session.initializeCollection(collection, false);
 
-//						CollectionPersister collectionPersister = ((SessionFactoryImpl) sessionFactory).getCollectionPersister(persistentCollection.getRole());
-//						collectionPersister.initialize(persistentCollection.getKey(), (SessionImpl) s);
-//						Object o = collectionPersister.getCollectionType().instantiate(20);
 						value = collection.getValue();
 						if (value instanceof Collection) {
 							if (value instanceof PersistentBag || value instanceof PersistentList) {
@@ -134,12 +121,6 @@ public class HibernateUtil extends DBUtil {
 							T result = (T) value;
 							return result;
 						}
-
-//						session.initializeCollection(persistentCollection, false);
-
-
-//						CollectionEntry entry = ((SessionImpl) s).getPersistenceContext().getCollectionEntry(persistentCollection);
-//						return entry == null ? : entry.;
 					}
 				} catch (Exception e) {
 					LOGGER.log(Level.WARNING, "Error initializing lazy collection: " + collection.getRole() + ", ID: " + collection.getKey(), e);
