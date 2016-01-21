@@ -26,6 +26,7 @@ import org.hibernate.ejb.HibernateQuery;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
 import org.hibernate.persister.collection.CollectionPersister;
@@ -62,7 +63,7 @@ public class HibernateUtil extends DBUtil {
 		return Hibernate.isInitialized(object);
 	}
 
-	private <T> T getRefreshed(Session session, T entity, boolean printError) {
+	private <T> T getRefreshed(EventSource session, T entity, boolean printError) {
 		Transaction transaction = null;
 		boolean closeTransaction = false;
 		try {
@@ -98,10 +99,60 @@ public class HibernateUtil extends DBUtil {
 			return entity;
 		}
 
-		return lazyLoad(null, entity, false);
+		if (entity instanceof HibernateProxy) {
+			return lazyLoadProxy(null, entity, false);
+		} else if (entity instanceof PersistentCollection) {
+			return lazyLoadCollection(null, entity, false);
+		}
+
+		LOGGER.warning("Do not know how to lazy load entity " + entity.getClass().getName());
+		return null;
 	}
 
-	private <T> T lazyLoad(Session s, T entity, boolean closeSession) {
+	private <T> T lazyLoadProxy(Session s, T proxy, boolean closeSession) {
+		EventSource session = null;
+		if (s instanceof EventSource) {
+			session = (EventSource) s;
+		} else if (s == null) {
+			SessionImplementor sessionImplementor = ((HibernateProxy) proxy).getHibernateLazyInitializer().getSession();
+			if (sessionImplementor instanceof EventSource) {
+				session = (SessionImpl) sessionImplementor;
+			} else if (sessionImplementor != null) {
+				LOGGER.warning(sessionImplementor.getClass().getName() + " is not EventSource!");
+			}
+		}
+
+		if (session == null) {
+			try {
+				SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
+				s = sessionFactory.getCurrentSession();
+				if (s instanceof SessionImpl) {
+					session = (SessionImpl) s;
+				} else if (s instanceof EventSource) {
+					session = (EventSource) s;
+				} else if (s != null && Proxy.isProxyClass(s.getClass())) {
+					session = (EventSource) s;
+				}
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, "Error getting current session " + s, e);
+			}
+		}
+		if (session == null) {
+			closeSession = true;
+			SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
+			s = sessionFactory.openSession();
+			if (s instanceof SessionImpl) {
+				session = (SessionImpl) s;
+			} else if (s instanceof EventSource) {
+				session = (EventSource) s;
+			}
+		}
+
+		T result = getRefreshed(session, proxy, closeSession);
+		return result;
+	}
+
+	private <T> T lazyLoadCollection(Session s, T entity, boolean closeSession) {
 		boolean closeTransaction = false;
 		Transaction transaction = null;
 		try {
@@ -117,17 +168,6 @@ public class HibernateUtil extends DBUtil {
 				s = sessionFactory.openSession();
 			}
 
-			if (entity instanceof HibernateProxy) {
-				T result = getRefreshed(s, entity, false);
-				if (result == null && !(s instanceof SessionImpl)) {
-					closeSession = true;
-					s = sessionFactory.openSession();
-
-					result = getRefreshed(s, entity, true);
-				}
-				return result;
-			}
-
 			if (entity instanceof AbstractPersistentCollection) {
 				AbstractPersistentCollection collection = (AbstractPersistentCollection) entity;
 				Object value = collection.getValue();
@@ -138,16 +178,23 @@ public class HibernateUtil extends DBUtil {
 						return result;
 					} else {
 						SessionImplementor sessionImplementor = collection.getSession();
-						SessionImpl session = sessionImplementor instanceof SessionImpl ? (SessionImpl) sessionImplementor : null;
+						EventSource session = sessionImplementor instanceof EventSource ? (EventSource) sessionImplementor : null;
 
 						InvocationHandler invocationHandler = null;
 						PersistenceContext persistenceContext = null;
 						if (session == null && s instanceof SessionImpl) {
 							session = (SessionImpl) s;
+//						} else if (session == null && s instanceof EventSource) {
+//							session = (EventSource) s;
+//							transaction = s.getTransaction();
+//							if (transaction == null || !transaction.isActive()) {
+//								closeTransaction = true;
+//								transaction = s.beginTransaction();
+//							}
 						} else if (session == null) {
 							//	Session may be proxied
 							String proxiedSessionClassName = null;
-							if (java.lang.reflect.Proxy.isProxyClass(s.getClass())) {
+							if (Proxy.isProxyClass(s.getClass())) {
 								transaction = s.getTransaction();
 								if (transaction == null || !transaction.isActive()) {
 									closeTransaction = true;
@@ -212,7 +259,7 @@ public class HibernateUtil extends DBUtil {
 						value = collection.getValue();
 						boolean initialized = collection.wasInitialized();
 						if (!initialized && session == null) {
-							T result = lazyLoad(sessionFactory.openSession(), entity, true);
+							T result = lazyLoadCollection(sessionFactory.openSession(), entity, true);
 							return result;
 						}
 
