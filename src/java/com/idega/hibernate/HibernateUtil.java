@@ -249,9 +249,7 @@ public class HibernateUtil extends DBUtil {
 										initializeCollection,
 										new Object[] {collection, false}
 								);
-							} catch (Throwable e) {
-								LOGGER.log(Level.WARNING, "Error initializing collection: " + collection.getRole() + ", ID: " + collection.getKey() + " with session " + s.getClass().getName());
-							}
+							} catch (Throwable e) {}
 						} else {
 							session.initializeCollection(collection, false);
 						}
