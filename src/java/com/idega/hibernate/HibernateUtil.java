@@ -37,7 +37,6 @@ import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.util.DBUtil;
 
-@SuppressWarnings("deprecation")
 @Transactional(readOnly = true)
 public class HibernateUtil extends DBUtil {
 
@@ -124,8 +123,7 @@ public class HibernateUtil extends DBUtil {
 
 		if (session == null) {
 			try {
-				SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
-				s = sessionFactory.getCurrentSession();
+				s = getCurrentSession();
 				if (s instanceof SessionImpl) {
 					session = (SessionImpl) s;
 				} else if (s instanceof EventSource) {
@@ -299,6 +297,7 @@ public class HibernateUtil extends DBUtil {
 		return entity;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void doInitializeCaching(Query query, String cacheRegion) {
 		if (query instanceof org.hibernate.Query) {
@@ -333,6 +332,16 @@ public class HibernateUtil extends DBUtil {
 	public <T> List<T> getCachedEntities(String name) {
 		Map<String, List<T>> cache = getCache(name);
 		return cache.get(name);
+	}
+
+	@Override
+	public Session getCurrentSession() {
+		SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
+		Session session = sessionFactory.getCurrentSession();
+		if (session == null || !session.isOpen()) {
+			session = sessionFactory.openSession();
+		}
+		return session;
 	}
 
 }
