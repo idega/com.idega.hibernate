@@ -334,6 +334,7 @@ public class HibernateUtil extends DBUtil {
 		return cache.get(name);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Session getCurrentSession() {
 		SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
