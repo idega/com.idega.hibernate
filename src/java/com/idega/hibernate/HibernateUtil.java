@@ -31,6 +31,7 @@ import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.stat.Statistics;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.core.cache.IWCacheManager2;
@@ -343,6 +344,18 @@ public class HibernateUtil extends DBUtil {
 			session = sessionFactory.openSession();
 		}
 		return session;
+	}
+
+	@Override
+	public String getStatistics() {
+		Session session = getCurrentSession();
+		if (session == null) {
+			return "Current session is not available";
+		}
+
+		SessionFactory sessionFactory = session.getSessionFactory();
+		Statistics statistics = sessionFactory.getStatistics();
+		return statistics.toString();
 	}
 
 }
