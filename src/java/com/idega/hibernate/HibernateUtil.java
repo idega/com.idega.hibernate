@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
+import com.idega.util.CoreUtil;
 import com.idega.util.DBUtil;
 
 @Transactional(readOnly = true)
@@ -95,17 +96,23 @@ public class HibernateUtil extends DBUtil {
 
 	@Override
 	public <T> T lazyLoad(T entity) {
-		if (isInitialized(entity)) {
-			return entity;
-		}
+		try {
+			if (isInitialized(entity)) {
+				return entity;
+			}
 
-		if (entity instanceof HibernateProxy) {
-			return lazyLoadProxy(null, entity, false);
-		} else if (entity instanceof PersistentCollection) {
-			return lazyLoadCollection(null, entity, false);
-		}
+			if (entity instanceof HibernateProxy) {
+				return lazyLoadProxy(null, entity, false);
+			} else if (entity instanceof PersistentCollection) {
+				return lazyLoadCollection(null, entity, false);
+			}
 
-		LOGGER.warning("Do not know how to lazy load entity " + entity.getClass().getName());
+			LOGGER.warning("Do not know how to lazy load entity " + entity.getClass().getName());
+		} catch (Exception e) {
+			String message = "Error to laod lazily entity " + entity.getClass().getName();
+			CoreUtil.sendExceptionNotification(message, e);
+			LOGGER.log(Level.WARNING, message, e);
+		}
 		return null;
 	}
 
