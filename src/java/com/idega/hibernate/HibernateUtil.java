@@ -64,6 +64,30 @@ public class HibernateUtil extends DBUtil {
 		return Hibernate.isInitialized(object);
 	}
 
+	private void finalizeTransaction(Transaction transaction) {
+		try {
+			if (transaction == null || transaction.wasCommitted()) {
+				return;
+			}
+
+			transaction.commit();
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error commiting transaction " + transaction, e);
+		}
+	}
+
+	private void finalizeSession(Session session) {
+		try {
+			if (session == null || !session.isOpen()) {
+				return;
+			}
+
+			session.close();
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error closing session " + session, e);
+		}
+	}
+
 	private <T> T getRefreshed(EventSource session, T entity, boolean printError) {
 		Transaction transaction = null;
 		boolean closeTransaction = false;
@@ -86,8 +110,8 @@ public class HibernateUtil extends DBUtil {
 			}
 			return null;
 		} finally {
-			if (closeTransaction && transaction != null) {
-				transaction.commit();
+			if (closeTransaction) {
+				finalizeTransaction(transaction);
 			}
 		}
 
@@ -109,7 +133,7 @@ public class HibernateUtil extends DBUtil {
 
 			LOGGER.warning("Do not know how to lazy load entity " + entity.getClass().getName());
 		} catch (Exception e) {
-			String message = "Error to laod lazily entity " + entity.getClass().getName();
+			String message = "Error while lazily loading entity " + entity.getClass().getName();
 			CoreUtil.sendExceptionNotification(message, e);
 			LOGGER.log(Level.WARNING, message, e);
 		}
@@ -290,15 +314,11 @@ public class HibernateUtil extends DBUtil {
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error initializing entity", e);
 		} finally {
-			if (closeTransaction && transaction != null) {
-				try {
-					transaction.commit();
-				} catch (Exception e) {}
+			if (closeTransaction) {
+				finalizeTransaction(transaction);
 			}
-			if (closeSession && (s != null && s.isOpen())) {
-				try {
-					s.close();
-				} catch (Exception e) {}
+			if (closeSession) {
+				finalizeSession(s);
 			}
 		}
 
