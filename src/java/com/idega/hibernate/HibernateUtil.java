@@ -71,9 +71,7 @@ public class HibernateUtil extends DBUtil {
 			}
 
 			transaction.commit();
-		} catch (Exception e) {
-			LOGGER.log(Level.WARNING, "Error commiting transaction " + transaction, e);
-		}
+		} catch (Exception e) {}
 	}
 
 	private void finalizeSession(Session session) {
@@ -83,9 +81,7 @@ public class HibernateUtil extends DBUtil {
 			}
 
 			session.close();
-		} catch (Exception e) {
-			LOGGER.log(Level.WARNING, "Error closing session " + session, e);
-		}
+		} catch (Exception e) {}
 	}
 
 	private <T> T getRefreshed(EventSource session, T entity, boolean printError) {
