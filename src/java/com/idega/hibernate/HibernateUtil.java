@@ -64,27 +64,41 @@ public class HibernateUtil extends DBUtil {
 		return Hibernate.isInitialized(object);
 	}
 
-	private void finalizeTransaction(Transaction transaction) {
+	@Override
+	public <T> void finalizeTransaction(T transaction) {
 		try {
-			if (transaction == null || transaction.wasCommitted()) {
+			if (!(transaction instanceof Transaction)) {
+				LOGGER.warning("Can not finalize transaction: " + (transaction == null ? "not provided" : transaction.getClass().getName()));
 				return;
 			}
 
-			transaction.commit();
-		} catch (Exception e) {}
-	}
-
-	private void finalizeSession(Session session) {
-		try {
-			if (session == null || !session.isOpen()) {
+			Transaction hTransaction = (Transaction) transaction;
+			if (hTransaction.wasCommitted()) {
 				return;
 			}
 
-			session.close();
+			hTransaction.commit();
 		} catch (Exception e) {}
 	}
 
-	private <T> T getRefreshed(EventSource session, T entity, boolean printError) {
+	@Override
+	public <S> void finalizeSession(S session) {
+		try {
+			if (!(session instanceof Session)) {
+				LOGGER.warning("Can not finalize session: " + (session == null ? "not provided" : session.getClass().getName()));
+				return;
+			}
+
+			Session hSession = (Session) session;
+			if (!hSession.isOpen()) {
+				return;
+			}
+
+			hSession.close();
+		} catch (Exception e) {}
+	}
+
+	private <T> T getRefreshed(EventSource session, T entity, boolean printError, boolean closeSession) {
 		Transaction transaction = null;
 		boolean closeTransaction = false;
 		try {
@@ -108,6 +122,9 @@ public class HibernateUtil extends DBUtil {
 		} finally {
 			if (closeTransaction) {
 				finalizeTransaction(transaction);
+			}
+			if (closeSession) {
+				finalizeSession(session);
 			}
 		}
 
@@ -138,6 +155,7 @@ public class HibernateUtil extends DBUtil {
 
 	private <T> T lazyLoadProxy(Session s, T proxy, boolean closeSession) {
 		EventSource session = null;
+		//	Checking current session
 		if (s instanceof EventSource) {
 			session = (EventSource) s;
 		} else if (s == null) {
@@ -151,7 +169,9 @@ public class HibernateUtil extends DBUtil {
 
 		if (session == null) {
 			try {
-				s = getCurrentSession();
+				SessionWithFlag sessionWithFlag = getSession();
+				s = sessionWithFlag == null ? null : sessionWithFlag.session;
+				closeSession = sessionWithFlag == null ? false : sessionWithFlag.openedNewSession;
 				if (s instanceof SessionImpl) {
 					session = (SessionImpl) s;
 				} else if (s instanceof EventSource) {
@@ -163,7 +183,9 @@ public class HibernateUtil extends DBUtil {
 				LOGGER.log(Level.WARNING, "Error getting current session " + s, e);
 			}
 		}
+		boolean printError = false;
 		if (session == null) {
+			printError = true;
 			closeSession = true;
 			SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
 			s = sessionFactory.openSession();
@@ -174,7 +196,7 @@ public class HibernateUtil extends DBUtil {
 			}
 		}
 
-		T result = getRefreshed(session, proxy, closeSession);
+		T result = getRefreshed(session, proxy, printError, closeSession);
 		return result;
 	}
 
@@ -210,13 +232,6 @@ public class HibernateUtil extends DBUtil {
 						PersistenceContext persistenceContext = null;
 						if (session == null && s instanceof SessionImpl) {
 							session = (SessionImpl) s;
-//						} else if (session == null && s instanceof EventSource) {
-//							session = (EventSource) s;
-//							transaction = s.getTransaction();
-//							if (transaction == null || !transaction.isActive()) {
-//								closeTransaction = true;
-//								transaction = s.beginTransaction();
-//							}
 						} else if (session == null) {
 							//	Session may be proxied
 							String proxiedSessionClassName = null;
@@ -361,24 +376,49 @@ public class HibernateUtil extends DBUtil {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Session getCurrentSession() {
-		SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
-		Session session = sessionFactory.getCurrentSession();
-		if (session == null || !session.isOpen()) {
-			session = sessionFactory.openSession();
-		}
-		return session;
+		SessionWithFlag sessionWithFlag = getSession();
+		return sessionWithFlag == null ? null : sessionWithFlag.session;
 	}
 
 	@Override
 	public String getStatistics() {
-		Session session = getCurrentSession();
-		if (session == null) {
+		SessionWithFlag sessionWithFlag = getSession();
+		if (sessionWithFlag == null || sessionWithFlag.session == null) {
 			return "Current session is not available";
 		}
 
-		SessionFactory sessionFactory = session.getSessionFactory();
-		Statistics statistics = sessionFactory.getStatistics();
-		return statistics.toString();
+		try {
+			SessionFactory sessionFactory = sessionWithFlag.session.getSessionFactory();
+			Statistics statistics = sessionFactory.getStatistics();
+			return statistics.toString();
+		} finally {
+			if (sessionWithFlag.openedNewSession) {
+				finalizeSession(sessionWithFlag.session);
+			}
+		}
+	}
+
+	private class SessionWithFlag {
+
+		private Session session = null;
+		private boolean openedNewSession = false;
+
+		private SessionWithFlag(Session session, boolean openedNewSession) {
+			this.session = session;
+			this.openedNewSession = openedNewSession;
+		}
+
+	}
+
+	private SessionWithFlag getSession() {
+		SessionFactory sessionFactory = SessionFactoryHelper.getInstance().getSessionFactory();
+		Session session = sessionFactory.getCurrentSession();
+		boolean openedNewSession = false;
+		if (session == null || !session.isOpen()) {
+			session = sessionFactory.openSession();
+			openedNewSession = true;
+		}
+		return new SessionWithFlag(session, openedNewSession);
 	}
 
 }
