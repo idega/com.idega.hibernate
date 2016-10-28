@@ -6,32 +6,21 @@
 
 <hibernate-configuration>
   <session-factory>
-    
-    <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
-    
-    <!-- 
-    <Automatically create and drop schema when starting/closing application> 
-    -->
+  	<!-- Connection -->
+  	<property name="hibernate.connection.datasource">java:comp/env/jdbc/C3P0DS</property>
+
     <property name="hibernate.hbm2ddl.auto">update</property>
-    <!-- 
-    </Automatically create and drop schema when starting/closing application> 
-    -->
-    
-    <!-- 
-    <DataSource properties> 
-    -->
-    <!-- FIXME: make this setable as it is in repository -->
-    <property name="hibernate.connection.datasource">java:comp/env/jdbc/DefaultDS</property>
-    <!-- 
-    </DataSource properties> 
-    -->
-    
-    <property name="hibernate.show_sql">false</property>
-    
-    <!-- Enable Hibernate's automatic session context management -->
     <property name="hibernate.current_session_context_class">thread</property>
-    
     <property name="hibernate.bytecode.use_reflection_optimizer">true</property>
-    
+
+    <!-- Cache -->
+    <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
+    <property name="hibernate.cache.use_second_level_cache">true</property>
+    <property name="hibernate.cache.use_query_cache">true</property>
+    <property name="hibernate.cache.default_cache_concurrency_strategy">nonstrict-read-write</property>
+
+	<!-- Debug -->
+	<property name="hibernate.generate_statistics">false</property>
+    <property name="hibernate.show_sql">false</property>
   </session-factory>
 </hibernate-configuration>
