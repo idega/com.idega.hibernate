@@ -22,13 +22,13 @@ import org.hibernate.collection.internal.PersistentBag;
 import org.hibernate.collection.internal.PersistentList;
 import org.hibernate.collection.internal.PersistentSet;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.ejb.HibernateQuery;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
+import org.hibernate.jpa.HibernateQuery;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.stat.Statistics;
@@ -336,7 +336,6 @@ public class HibernateUtil extends DBUtil {
 		return entity;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void doInitializeCaching(Query query, String cacheRegion) {
 		if (query instanceof org.hibernate.Query) {
@@ -419,6 +418,20 @@ public class HibernateUtil extends DBUtil {
 			openedNewSession = true;
 		}
 		return new SessionWithFlag(session, openedNewSession);
+	}
+
+	@Override
+	public String getQueryInfo(Query q) {
+		if (q == null) {
+			return null;
+		}
+
+		if (q instanceof HibernateQuery) {
+			return ((HibernateQuery) q).getHibernateQuery().toString();
+		}
+
+		LOGGER.warning("Do not know how to get info from " + q.getClass().getName());
+		return q.toString();
 	}
 
 }
