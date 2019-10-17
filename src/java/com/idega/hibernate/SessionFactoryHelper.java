@@ -85,7 +85,9 @@ package com.idega.hibernate;
 import javax.persistence.EntityManagerFactory;
 
 import org.hibernate.SessionFactory;
-import org.hibernate.ejb.HibernateEntityManagerFactory;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.service.ServiceRegistry;
+import org.hibernate.service.ServiceRegistryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.util.expression.ELUtil;
@@ -117,7 +119,12 @@ public class SessionFactoryHelper {
 	}
 	
 	private SessionFactoryHelper() {
-		sessionFactory  = ((HibernateEntityManagerFactory) getEntityManagerFactory()).getSessionFactory();
+		Configuration config = new Configuration();		
+		config.configure();
+		ServiceRegistryBuilder srBuilder = new ServiceRegistryBuilder();
+		srBuilder.applySettings(config.getProperties());
+		ServiceRegistry serviceRegistry = srBuilder.buildServiceRegistry();
+		sessionFactory  = config.buildSessionFactory(serviceRegistry);
 	}
 
 	/**

@@ -30,7 +30,7 @@
             <property name="hibernate.cache.use_query_cache" value="true" />
             <property name="hibernate.cache.default_cache_concurrency_strategy" value="nonstrict-read-write" />
             <property name="hibernate.generate_statistics" value="false" />
-            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.show_sql" value="false" />
         </properties>
 
     </persistence-unit>
