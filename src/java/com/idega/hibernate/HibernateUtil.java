@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,8 +42,6 @@ import com.idega.util.CoreUtil;
 import com.idega.util.DBUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.datastructures.map.MapUtil;
-
-import net.sf.ehcache.util.concurrent.ConcurrentHashMap;
 
 @Transactional(readOnly = true)
 public class HibernateUtil extends DBUtil {
