@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,11 +39,17 @@ import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.util.CoreUtil;
 import com.idega.util.DBUtil;
+import com.idega.util.ListUtil;
+import com.idega.util.datastructures.map.MapUtil;
+
+import net.sf.ehcache.util.concurrent.ConcurrentHashMap;
 
 @Transactional(readOnly = true)
 public class HibernateUtil extends DBUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(HibernateUtil.class.getName());
+
+	private Map<Long, List<Session>> allSessions = new ConcurrentHashMap<>();
 
 	@Override
 	@SuppressWarnings("unchecked")
@@ -83,19 +90,68 @@ public class HibernateUtil extends DBUtil {
 
 	@Override
 	public <S> void finalizeSession(S session) {
+		finalizeSession(null, session);
+	}
+
+	private <S> void finalizeSession(Long timestamp, S session) {
 		try {
 			if (!(session instanceof Session)) {
 				LOGGER.warning("Can not finalize session: " + (session == null ? "not provided" : session.getClass().getName()));
 				return;
 			}
 
-			Session hSession = (Session) session;
-			if (!hSession.isOpen()) {
-				return;
+			if (timestamp == null) {
+				Session hSession = (Session) session;
+				if (IWMainApplication.getDefaultIWMainApplication().getSettings().getBoolean("hibernate.close_transaction_from_session", true)) {
+					finalizeTransaction(hSession.getTransaction());
+				}
+
+				if (!hSession.isOpen()) {
+					return;
+				}
+
+				hSession.close();
+			} else {
+				List<Session> sessions = allSessions.get(timestamp);
+				if (sessions == null) {
+					sessions = new ArrayList<>();
+					allSessions.put(timestamp, sessions);
+				}
+				sessions.add((Session) session);
+			}
+		} catch (Exception e) {}
+	}
+
+	public Runnable getTaskToFinalizeSessions() {
+		return new Runnable() {
+
+			@Override
+			public void run() {
+				if (MapUtil.isEmpty(allSessions)) {
+					return;
+				}
+
+				long now = System.currentTimeMillis();
+				Set<Long> keys = new HashSet<>(allSessions.keySet());
+				int minSessionAge = IWMainApplication.getDefaultIWMainApplication().getSettings().getInt("hibernate.session_min_age", 60 * 1000);
+				for (Long key: keys) {
+					long age = now - key;
+					if (age < minSessionAge) {
+						continue;
+					}
+
+					List<Session> sessions = allSessions.remove(key);
+					if (ListUtil.isEmpty(sessions)) {
+						continue;
+					}
+
+					for (Session session: sessions) {
+						finalizeSession(null, session);
+					}
+				}
 			}
 
-			hSession.close();
-		} catch (Exception e) {}
+		};
 	}
 
 	private <T> T getRefreshed(EventSource session, T entity, boolean printError, boolean closeSession) {
@@ -124,7 +180,7 @@ public class HibernateUtil extends DBUtil {
 				finalizeTransaction(transaction);
 			}
 			if (closeSession) {
-				finalizeSession(session);
+				finalizeSession(System.currentTimeMillis(), session);
 			}
 		}
 
@@ -138,10 +194,11 @@ public class HibernateUtil extends DBUtil {
 				return entity;
 			}
 
+			boolean alwaysCloseSession = IWMainApplication.getDefaultIWMainApplication().getSettings().getBoolean("hibernate.close_session_after_lazy_load", true);
 			if (entity instanceof HibernateProxy) {
-				return lazyLoadProxy(null, entity, false);
+				return lazyLoadProxy(null, entity, alwaysCloseSession);
 			} else if (entity instanceof PersistentCollection) {
-				return lazyLoadCollection(null, entity, false);
+				return lazyLoadCollection(null, entity, alwaysCloseSession);
 			}
 
 			LOGGER.warning("Do not know how to lazy load entity " + entity.getClass().getName());
@@ -305,11 +362,11 @@ public class HibernateUtil extends DBUtil {
 						if (value instanceof Collection) {
 							if (value instanceof PersistentBag || value instanceof PersistentList) {
 								@SuppressWarnings("unchecked")
-								T result = initialized ? (T) new ArrayList<T>((Collection<T>) value) : (T) new ArrayList<T>(0);
+								T result = initialized ? (T) new ArrayList<>((Collection<T>) value) : (T) new ArrayList<T>(0);
 								return result;
 							} else if (value instanceof PersistentSet) {
 								@SuppressWarnings("unchecked")
-								T result = initialized ? (T) new HashSet<T>((Collection<T>) value) : (T) new HashSet<T>(0);
+								T result = initialized ? (T) new HashSet<>((Collection<T>) value) : (T) new HashSet<T>(0);
 								return result;
 							}
 						} else {
@@ -329,7 +386,7 @@ public class HibernateUtil extends DBUtil {
 				finalizeTransaction(transaction);
 			}
 			if (closeSession) {
-				finalizeSession(s);
+				finalizeSession(System.currentTimeMillis(), s);
 			}
 		}
 
@@ -392,7 +449,7 @@ public class HibernateUtil extends DBUtil {
 			return statistics.toString();
 		} finally {
 			if (sessionWithFlag.openedNewSession) {
-				finalizeSession(sessionWithFlag.session);
+				finalizeSession(System.currentTimeMillis(), sessionWithFlag.session);
 			}
 		}
 	}
