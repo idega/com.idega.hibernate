@@ -178,9 +178,7 @@ public class HibernateUtil extends DBUtil {
 			if (closeTransaction) {
 				finalizeTransaction(transaction);
 			}
-			if (closeSession) {
-				finalizeSession(System.currentTimeMillis(), session);
-			}
+			finalizeSession(closeSession ? null : System.currentTimeMillis(), session);
 		}
 
 		return entity;
@@ -193,11 +191,10 @@ public class HibernateUtil extends DBUtil {
 				return entity;
 			}
 
-			boolean alwaysCloseSession = IWMainApplication.getDefaultIWMainApplication().getSettings().getBoolean("hibernate.close_session_after_lazy_load", true);
 			if (entity instanceof HibernateProxy) {
-				return lazyLoadProxy(null, entity, alwaysCloseSession);
+				return lazyLoadProxy(null, entity);
 			} else if (entity instanceof PersistentCollection) {
-				return lazyLoadCollection(null, entity, alwaysCloseSession);
+				return lazyLoadCollection(null, entity, false);
 			}
 
 			LOGGER.warning("Do not know how to lazy load entity " + entity.getClass().getName());
@@ -209,7 +206,8 @@ public class HibernateUtil extends DBUtil {
 		return null;
 	}
 
-	private <T> T lazyLoadProxy(Session s, T proxy, boolean closeSession) {
+	private <T> T lazyLoadProxy(Session s, T proxy) {
+		boolean closeSession = false;
 		EventSource session = null;
 		//	Checking current session
 		if (s instanceof EventSource) {
@@ -384,9 +382,8 @@ public class HibernateUtil extends DBUtil {
 			if (closeTransaction) {
 				finalizeTransaction(transaction);
 			}
-			if (closeSession) {
-				finalizeSession(System.currentTimeMillis(), s);
-			}
+
+			finalizeSession(closeSession ? null : System.currentTimeMillis(), s);
 		}
 
 		return entity;
