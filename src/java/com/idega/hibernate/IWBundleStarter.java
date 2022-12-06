@@ -21,11 +21,12 @@ public class IWBundleStarter implements IWBundleStartable {
 
 	@Override
 	public void start(IWBundle bundle) {
-		IWTaskScheduler taskScheduler = getTaskScheduler();
-		try {
-			taskScheduler.schedule(0, -1, -1, ((HibernateUtil) HibernateUtil.getInstance()).getTaskToFinalizeSessions());
-		} catch (Exception e) {}
-
+		if (bundle.getApplication().getSettings().getBoolean("hibernate.close_old_sessions", true)) {
+			IWTaskScheduler taskScheduler = getTaskScheduler();
+			try {
+				taskScheduler.schedule(0, -1, -1, ((HibernateUtil) HibernateUtil.getInstance()).getTaskToFinalizeSessions());
+			} catch (Exception e) {}
+		}
 	}
 
 	@Override
